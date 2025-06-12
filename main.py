@@ -3,6 +3,7 @@ import os
 import csv
 import shutil
 
+
 def clean_output_directory(directory):
     """Clean the output directory before generating new certificates."""
     if os.path.exists(directory):
@@ -11,7 +12,7 @@ def clean_output_directory(directory):
     print(f"Cleaned output directory: {directory}")
 
     
-def add_name_centered(input_pdf, output_pdf, name, font_path, y=325, font_size=48):
+def add_name_centered(input_pdf, output_pdf, name, font_path,x=0, y=320, font_size=55):
     try:
         doc = fitz.open(input_pdf)
         page = doc[0]
@@ -46,7 +47,7 @@ def add_name_centered(input_pdf, output_pdf, name, font_path, y=325, font_size=4
         print(f"Error generating certificate for {name}: {str(e)}")
         return False
 
-def generate_certificates_from_csv(csv_path, template, font_path, y=325, font_size=48):
+def generate_certificates_from_csv(csv_path, template, font_path,x=0, y=320, font_size=55):
     try:
         # Validate input files
         if not os.path.exists(csv_path):
@@ -59,6 +60,7 @@ def generate_certificates_from_csv(csv_path, template, font_path, y=325, font_si
         # Clean and create output directory
         output_dir = 'certificates'
         clean_output_directory(output_dir)
+
 
         # Read CSV file
         successful = 0
@@ -130,10 +132,9 @@ if __name__ == '__main__':
     csv_file = "BCA Project Report - Form Responses.csv"
     
     try:
-        generate_certificates_from_csv(csv_file, template, font_path, y=325, font_size=48)
+        generate_certificates_from_csv(csv_file, template, font_path,x=0, y=320, font_size=55)
     except Exception as e:
         print(f"Program failed: {str(e)}")
-
 
 
 
