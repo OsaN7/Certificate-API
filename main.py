@@ -12,7 +12,7 @@ def clean_output_directory(directory):
     print(f"Cleaned output directory: {directory}")
 
     
-def add_name_centered(input_pdf, output_pdf, name, font_path,x=0, y=320, font_size=55):
+def add_name_centered(input_pdf, output_pdf, name, font_path,x=0, y=320, font_size=55,prefix=""):
     try:
         doc = fitz.open(input_pdf)
         page = doc[0]
@@ -22,6 +22,8 @@ def add_name_centered(input_pdf, output_pdf, name, font_path,x=0, y=320, font_si
         font_alias = "shelley_script"
         page.insert_font(fontname=font_alias, fontfile=font_path)
         font = fitz.Font(fontfile=font_path)
+
+        
         
         # Calculate text dimensions
         text_width = font.text_length(name, fontsize=font_size)
@@ -41,7 +43,7 @@ def add_name_centered(input_pdf, output_pdf, name, font_path,x=0, y=320, font_si
         # Save the modified PDF
         doc.save(output_pdf)
         doc.close()
-        print(f"Certificate generated successfully: {output_pdf}")
+        print(f"Certificate generated successfully: {output_pdf} (Coordinates x:{x}, and y:{y})")
         return True
     except Exception as e:
         print(f"Error generating certificate for {name}: {str(e)}")
@@ -61,7 +63,7 @@ def generate_certificates_from_csv(csv_path, template, font_path,x=0, y=320, fon
         output_dir = 'certificates'
         clean_output_directory(output_dir)
 
-
+        
         # Read CSV file
         successful = 0
         failed = 0
@@ -101,6 +103,7 @@ def generate_certificates_from_csv(csv_path, template, font_path,x=0, y=320, fon
                     name=name,
                     font_path=font_path,
                     y=y,
+                    x=x,
                     font_size=font_size
                 ):
                     successful += 1
@@ -127,9 +130,9 @@ def generate_certificates_from_csv(csv_path, template, font_path,x=0, y=320, fon
         raise
 
 if __name__ == '__main__':
-    template = "PNC Certificate - BCA Project Report Writing.pdf"  # Template name
-    font_path = "Shelley_Script.otf"
-    csv_file = "BCA Project Report - Form Responses.csv"
+    template = "template/PNC Certificate - BCA Project Report Writing.pdf"  # Template name
+    font_path = "fonts/Shelley_Script.otf"
+    csv_file = "data/BCA Project Report - Form Responses.csv"
     
     try:
         generate_certificates_from_csv(csv_file, template, font_path,x=0, y=320, font_size=55)
