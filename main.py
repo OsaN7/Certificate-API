@@ -8,11 +8,12 @@ def clean_output_directory(directory):
     """Clean the output directory before generating new certificates."""
     if os.path.exists(directory):
         shutil.rmtree(directory)
+
     os.makedirs(directory)
-    print(f"Cleaned output directory: {directory}")
+    print(f"New and Cleaned output directory: {directory}")
 
     
-def add_name_centered(input_pdf, output_pdf, name, font_path,x=0, y=320, font_size=55,prefix=""):
+def add_name_centered(input_pdf, output_pdf, name, email, font_path,x=0, y=320, font_size=55,prefix=" "):
     try:
         doc = fitz.open(input_pdf)
         page = doc[0]
@@ -43,7 +44,7 @@ def add_name_centered(input_pdf, output_pdf, name, font_path,x=0, y=320, font_si
         # Save the modified PDF
         doc.save(output_pdf)
         doc.close()
-        print(f"Certificate generated successfully: {output_pdf} (Coordinates x:{x}, and y:{y})")
+        print(f"Certificate generated successfully: {email} (Coordinates x:{x}, and y:{y})")
         return True
     except Exception as e:
         print(f"Error generating certificate for {name}: {str(e)}")
@@ -60,7 +61,7 @@ def generate_certificates_from_csv(csv_path, template, font_path,x=0, y=320, fon
             raise FileNotFoundError(f"Font file not found: {font_path}")
 
         # Clean and create output directory
-        output_dir = 'certificates'
+        output_dir = 'Certificates'
         clean_output_directory(output_dir)
 
         
@@ -74,7 +75,8 @@ def generate_certificates_from_csv(csv_path, template, font_path,x=0, y=320, fon
             csv_reader = csv.DictReader(csvfile)
             for idx, row in enumerate(csv_reader, 1):
                 total += 1
-                name = str(row['name']).strip()
+                name = str(row['name']).strip().title()
+                email = str(row['email']).strip().lower()
                 if not name or name == 'nan':  # Skip empty names or NaN values
                     print(f"Skipping invalid name at row {idx}")
                     failed += 1
@@ -89,19 +91,31 @@ def generate_certificates_from_csv(csv_path, template, font_path,x=0, y=320, fon
                     failed_certificates.append(f"Row {idx}: Missing date for {name}")
                     continue
                     
-                # Format date: replace slashes with hyphens and remove time
-                formatted_date = date.split()[0].replace('/', '-')
+                # Format date: replace slashes 
+                # formatted_date = date.split()[0].replace('/','')
+                # Format date as yyyymmdd for the filename
+                date_parts = date.split()[0].split('/')
+                if len(date_parts) == 3:
+                    day, month, year = date_parts
+                    formatted_date = f"{year}{month.zfill(2)}{day.zfill(2)}"
+                else:
+                    formatted_date = date.split()[0].replace('/', '')
+            
+
                 # Format name: replace spaces with underscores
                 formatted_name = name.replace(' ', '_')
                 
                 # Create filename with formatted date and name
-                output = os.path.join(output_dir, f"{formatted_date}_{formatted_name}.pdf")
+                # output = os.path.join(output_dir, f"{formatted_date}_{formatted_name}.pdf")
+                output = os.path.join(output_dir, f"{formatted_date}_Webinar_{formatted_name}.pdf")
+
                 
                 if add_name_centered(
                     input_pdf=template,
                     output_pdf=output,
                     name=name,
                     font_path=font_path,
+                    email=email,
                     y=y,
                     x=x,
                     font_size=font_size
@@ -109,7 +123,7 @@ def generate_certificates_from_csv(csv_path, template, font_path,x=0, y=320, fon
                     successful += 1
                 else:
                     failed += 1
-                    failed_certificates.append(f"Row {idx}: Failed to generate certificate for {name}")
+                    failed_certificates.append(f"Row {idx}: Failed to generate certificate for {name} {email}")
 
                 # Print progress
                 if idx % 10 == 0 or idx == total:
@@ -130,7 +144,7 @@ def generate_certificates_from_csv(csv_path, template, font_path,x=0, y=320, fon
         raise
 
 if __name__ == '__main__':
-    template = "template/PNC Certificate - BCA Project Report Writing.pdf"  # Template name
+    template = "template/PNC Certificate - BCA Project Report Writing.pdf"  
     font_path = "fonts/Shelley_Script.otf"
     csv_file = "data/BCA Project Report - Form Responses.csv"
     
@@ -141,4 +155,4 @@ if __name__ == '__main__':
 
 
 
- 
+
