@@ -181,7 +181,7 @@ def generate_certificates_from_file(csv_path, config: CertificateConfig):
 
 
 if __name__ == '__main__':
-    template = "template/PNC Certificate - BCA Project Report Writing.pdf"
+    template = "templates/PNC Certificate -BCA Project Report Writing.pdf"
     csv_file = "data/BCA Project Report - Form Responses.csv"
     output_dir = "20250517-webinar-bca-project-report"
     output_file_prefix = "20250517-webinar"
