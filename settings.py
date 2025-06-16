@@ -6,4 +6,4 @@
 
 
 class Settings:
-    OUTPUT_BASE_DIR = "certificates"
+    OUTPUT_BASE_DIR = "data/certificates"
