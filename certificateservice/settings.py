@@ -11,7 +11,7 @@ load_dotenv()
 
 
 class Settings:
-    OUTPUT_BASE_DIR = "../data/certificates"
+    OUTPUT_BASE_DIR = "data/certificates"
 
     SMTP_HOST: str = os.getenv("SMTP_HOST", None)
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", 0))
