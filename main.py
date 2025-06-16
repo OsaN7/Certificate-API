@@ -6,7 +6,7 @@ import fitz  # PyMuPDF
 import pandas as pd
 from pydantic import BaseModel
 
-from settings import Settings
+from certificateservice.settings import Settings
 
 
 class Point(BaseModel):
