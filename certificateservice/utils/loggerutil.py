@@ -7,7 +7,7 @@ import logging
 import sys
 from logging.handlers import RotatingFileHandler
 
-from ibtrading.settings import Settings
+from certificateservice.settings import Settings
 
 
 class CustomFormatter(logging.Formatter):

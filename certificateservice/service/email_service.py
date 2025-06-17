@@ -3,10 +3,16 @@
 -- Email: asokpant@gmail.com
 -- Created on: 15/05/2025
 """
+import os
 import smtplib
+from email import encoders
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+import markdown
+
+from certificateservice.settings import Settings
 from certificateservice.utils import loggerutil
 
 
@@ -20,7 +26,7 @@ class EmailService:
         self.sender_password = sender_password or Settings.SENDER_PASSWORD
         self.default_recipients = Settings.RECIPIENT_EMAILS  # Comma separated string
         self.server = None
-        self.enabled = Settings.ENABLE_EMAIL_ALERT
+        self.enabled = Settings.ENABLE_EMAIL_SERVICE
         if self.enabled:
             self.connect()
 
@@ -45,7 +51,8 @@ class EmailService:
         except Exception as e:
             self.logger.exception(f"Failed to login to SMTP server: {e}")
 
-    def send(self, subject, message, recipient_email: str = None):
+    def send(self, recipient_emails: str, subject: str, message: str, attachments: list[str] = None,
+             message_type: str = 'plain'):
         if not self.enabled:
             self.logger.warning("Email alerts are disabled.")
             return
@@ -54,20 +61,48 @@ class EmailService:
             if res[0] != 250:
                 self.logger.warning("SMTP server is not responding.")
                 self.connect()
-            self._send(subject, message, recipient_email)
+            self._send(recipient_emails=recipient_emails, subject=subject, message=message, attachments=attachments,
+                       message_type=message_type)
         except Exception as e:
             self.logger.exception(f"Failed to send email: {e}")
 
-    def _send(self, subject, message, recipient_email: str = None):
-        if recipient_email is None:
+    def _send(self, recipient_emails: str, subject, message, attachments: list[str] = None,
+              message_type: str = 'plain'):
+        """
+        :param recipient_emails:  Comma separated string of recipient emails
+        :param subject:  Email subject
+        :param message: Email message content
+        :param attachments:  List of file paths to attach to the email
+        :param message_type: plain, html, or markdown
+        :return:
+        """
+        if recipient_emails is None:
             recipients = self.default_recipients
         else:
-            recipients = recipient_email
+            recipients = recipient_emails
+        message_type = message_type if message_type in ['text', 'html', 'markdown'] else 'plain'
+
         msg = MIMEMultipart()
         msg['From'] = self.sender_email
         msg['To'] = recipients
         msg['Subject'] = subject
-        msg.attach(MIMEText(message, 'plain'))
+
+        if message_type == "markdown":
+            message = markdown.markdown(message)
+            message_type = "html"
+
+        msg.attach(MIMEText(message, message_type))
+
+        if attachments:
+            for attachment_path in attachments:
+                if attachment_path and os.path.isfile(attachment_path):
+                    with open(attachment_path, "rb") as f:
+                        part = MIMEBase('application', 'octet-stream')
+                        part.set_payload(f.read())
+                        encoders.encode_base64(part)
+                        part.add_header('Content-Disposition',
+                                        f'attachment; filename={os.path.basename(attachment_path)}')
+                        msg.attach(part)
 
         self.server.send_message(msg)
         self.logger.debug(f"Email sent to {recipients}")

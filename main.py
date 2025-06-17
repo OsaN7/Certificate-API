@@ -176,8 +176,8 @@ def generate_certificates_from_file(csv_path, config: CertificateConfig):
     except Exception as e:
         print_exc()
         raise
-def bcs_project_webinar_example():
-    template = "data/templates/PNC Certificate -BCA Project Report Writing.pdf"
+def bca_project_report_writing_webinar_example():
+    template = "data/templates/PNC Certificate-BCA Project Report Writing.pdf"
     csv_file = "data/BCA Project Report - Form Responses.csv"
     output_dir = "20250517-webinar-bca-project-report"
     output_file_prefix = "20250517-webinar"
@@ -208,7 +208,7 @@ def bcs_project_webinar_example():
         print(f"Program failed: {str(e)}")
 
 def csit_internship_report_writing_webinar():
-    template = "data/templates/PNC Certificate - B.Sc.CSIT Internship Report Writing.pdf"
+    template = "data/templates/PNC Certificate-B.Sc. CSIT Internship Report Writing.pdf"
     csv_file = "data/PNC Webinar BSC Internship Report Writing.csv"
     output_dir = "20250510-webinar-csit-internship-report"
     output_file_prefix = "20250510-webinar"
@@ -241,3 +241,4 @@ def csit_internship_report_writing_webinar():
 
 if __name__ == '__main__':
     csit_internship_report_writing_webinar()
+    bca_project_report_writing_webinar_example()
