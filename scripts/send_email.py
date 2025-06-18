@@ -143,9 +143,9 @@ def send_bca_internship_report_writing_certificate(email_service: EmailService):
         if is_email_sent:
             print(f"Email already sent for {index}: {row.get('name', 'Participant')}. Skipping...")
             continue
-        # name = row.get("name", "Participant")
+        name = row.get("name", "Participant")
         recipient_email = "asokpant@gmail.com"
-        recipient_email = row.get("email", None)
+        # recipient_email = row.get("email", None)
         if not recipient_email:
             print(f"No email found for {name}. Skipping...")
             continue
