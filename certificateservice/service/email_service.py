@@ -52,10 +52,10 @@ class EmailService:
             self.logger.exception(f"Failed to login to SMTP server: {e}")
 
     def send(self, recipient_emails: str, subject: str, message: str, attachments: list[str] = None,
-             message_type: str = 'plain'):
+             message_type: str = 'plain') -> bool:
         if not self.enabled:
             self.logger.warning("Email alerts are disabled.")
-            return
+            return False
         try:
             res = self.server.noop()
             if res[0] != 250:
@@ -63,8 +63,10 @@ class EmailService:
                 self.connect()
             self._send(recipient_emails=recipient_emails, subject=subject, message=message, attachments=attachments,
                        message_type=message_type)
+            return True
         except Exception as e:
             self.logger.exception(f"Failed to send email: {e}")
+            return False
 
     def _send(self, recipient_emails: str, subject, message, attachments: list[str] = None,
               message_type: str = 'plain'):
