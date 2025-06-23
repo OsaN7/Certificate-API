@@ -21,3 +21,13 @@ class Settings:
     SENDER_PASSWORD: str = os.getenv("SENDER_PASSWORD", None)
     RECIPIENT_EMAILS: str = os.getenv("RECIPIENT_EMAILS", None)
     ENABLE_EMAIL_SERVICE: bool = os.getenv("ENABLE_EMAIL_SERVICE", "False").lower() == "true"
+    
+    # Use DATABASE_URL from environment (.env)
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    DATABASE_URL="postgresql://postgres:osan@localhost:5432/certificate"
+
+    
+    
+
+
+ 

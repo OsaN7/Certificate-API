@@ -1,5 +1,3 @@
-"""
--- Created by: Ashok Kumar Pant
--- Email: asokpant@gmail.com
--- Created on: 16/06/2025
-"""
+from certificateservice.domain.certificate import CertificateRecordSchema  
+from .common import BaseResponse
+__all__ = ["CertificateRecordSchema", "BaseResponse"]
