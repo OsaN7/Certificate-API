@@ -50,6 +50,7 @@
 #     attachments: list[str] = None
 
 
+<<<<<<< HEAD
 # def send_email(email_service: EmailService, emails: list[EmailDetail]):
 #     try:
 #         for email in emails:
@@ -63,6 +64,25 @@
 #             print(f"Email sent to {email.recipient_email} with subject: {email.subject}")
 #     except Exception as e:
 #         print(f"Failed to send email: {e}")
+=======
+def send_email(email_service: EmailService, emails: list[EmailDetail]) -> bool:
+    try:
+        for email in emails:
+            success = email_service.send(
+                recipient_emails=email.recipient_email,
+                subject=email.subject,
+                message=email.message,
+                attachments=email.attachments,
+                message_type=email.message_type
+            )
+            if not success:
+                return False
+            print(f"Email sent to {email.recipient_email} with subject: {email.subject}")
+        return True
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        return False
+>>>>>>> 5e7812957d3de35b9b1d1c57dcad3ffbd9c836da
 
 
 # def send_email_example():
@@ -70,6 +90,7 @@
 #     subject = "Certificate of Participation for Webinar on B.Sc. CSIT Internship Report Writing"
 #     message_template = dedent(PNC_CERTIFICATE_OF_PARTICIPATION_EMAIL_TEMPLATE).strip()
 
+<<<<<<< HEAD
 #     placeholders = {
 #         "name": "Nishma Gautam",
 #         "event": "Webinar on CSIT Internship Report Writing"
@@ -84,6 +105,23 @@
 #             "data/certificates/20250510-webinar-csit-internship-report/20250510-webinar-080bca13.nishma@scst.edu.np-Nishma Gautam.pdf"]
 #     )
 #     send_email(email_service, emails=[email])
+=======
+    placeholders = {
+        "name": "Nishma Gautam",
+        "event": "Webinar on CSIT Internship Report Writing"
+    }
+    message = create_message(message_template, placeholders)
+    email = EmailDetail(
+        recipient_email="asokpant@gmail.com",
+        subject=subject,
+        message=message,
+        message_type="markdown",
+        attachments=[
+            "data/certificates/20250510-webinar-csit-internship-report/20250510-webinar-080bca13.nishma@scst.edu.np-Nishma Gautam.pdf"]
+    )
+    success = send_email(email_service, emails=[email])
+    print(f"Email sent to {email.recipient_email} with subject: {email.subject}")
+>>>>>>> 5e7812957d3de35b9b1d1c57dcad3ffbd9c836da
 
 
 # def send_csit_internship_report_writing_certificate(email_service: EmailService):
@@ -97,6 +135,7 @@
 #         is_email_sent = row.get("email_sent", False)
 #         is_email_sent = False if pd.isna(is_email_sent) else bool(is_email_sent)
 
+<<<<<<< HEAD
 #         if is_email_sent:
 #             print(f"Email already sent for {index}: {row.get('name', 'Participant')}. Skipping...")
 #             continue
@@ -121,6 +160,33 @@
 #         send_email(email_service, emails=[email])
 #         df.at[index, "email_sent"] = True
 #         df.to_csv(certificates_csv, index=False)
+=======
+        if is_email_sent:
+            print(f"Email already sent for {index}: {row.get('name', 'Participant')}. Skipping...")
+            continue
+        name = row.get("name", "Participant")
+        recipient_email = "asokpant@gmail.com"  # TODO
+        # recipient_email = row.get("email", None)
+        if not recipient_email:
+            print(f"No email found for {name}. Skipping...")
+            continue
+        placeholders = {
+            "name": name,
+            "event": event_name
+        }
+        message = create_message(message_template, placeholders)
+        certificate = row.get("output_file_url", None)
+        email = EmailDetail(
+            recipient_email=recipient_email,
+            subject=subject,
+            message=message,
+            message_type="markdown",
+            attachments=[certificate]
+        )
+        success = send_email(email_service, emails=[email])
+        df.at[index, "email_sent"] = success
+        df.to_csv(certificates_csv, index=False)
+>>>>>>> 5e7812957d3de35b9b1d1c57dcad3ffbd9c836da
 
 
 # def send_bca_internship_report_writing_certificate(email_service: EmailService):
@@ -134,6 +200,7 @@
 #         is_email_sent = row.get("email_sent", False)
 #         is_email_sent = False if pd.isna(is_email_sent) else bool(is_email_sent)
 
+<<<<<<< HEAD
 #         if is_email_sent:
 #             print(f"Email already sent for {index}: {row.get('name', 'Participant')}. Skipping...")
 #             continue
@@ -161,3 +228,36 @@
 #     email_service = EmailService()
 #     send_csit_internship_report_writing_certificate(email_service=email_service)
 #     # send_bca_internship_report_writing_certificate(email_service)
+=======
+        if is_email_sent:
+            print(f"Email already sent for {index}: {row.get('name', 'Participant')}. Skipping...")
+            continue
+        name = row.get("name", "Participant")
+        recipient_email = "asokpant@gmail.com"
+        # recipient_email = row.get("email", None)
+        if not recipient_email:
+            print(f"No email found for {name}. Skipping...")
+            continue
+        placeholders = {
+            "name": name,
+            "event": event_name
+        }
+        message = create_message(message_template, placeholders)
+        certificate = row.get("output_file_url", None)
+        email = EmailDetail(
+            recipient_email=recipient_email,
+            subject=subject,
+            message=message,
+            message_type="markdown",
+            attachments=[certificate]
+        )
+        success = send_email(email_service, emails=[email])
+        df.at[index, "email_sent"] = success
+        df.to_csv(certificates_csv, index=False)
+
+
+if __name__ == '__main__':
+    email_service = EmailService()
+    # send_csit_internship_report_writing_certificate(email_service=email_service)
+    send_bca_internship_report_writing_certificate(email_service)
+>>>>>>> 5e7812957d3de35b9b1d1c57dcad3ffbd9c836da
