@@ -106,3 +106,65 @@
 
 # #         self.server.send_message(msg)
 # #         self.logger.debug(f"Email sent to {recipients}")
+
+import os
+from email.message import EmailMessage
+import aiosmtplib
+
+async def send_email_to_list(reader, subject: str, body: str, test_email: str = None):
+    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.getenv("SMTP_PORT", 587))
+    smtp_user = os.getenv("SMTP_USER", "your-email@gmail.com")
+    smtp_pass = os.getenv("SMTP_PASS", "your-password")
+    from_email = smtp_user
+
+    # 1. Send to test email first (if provided)
+    if test_email:
+        try:
+            msg = EmailMessage()
+            msg["From"] = from_email
+            msg["To"] = test_email
+            msg["Subject"] = subject
+            msg.set_content(body)
+
+            await aiosmtplib.send(
+                msg,
+                hostname=smtp_host,
+                port=smtp_port,
+                start_tls=True,
+                username=smtp_user,
+                password=smtp_pass,
+            )
+        except Exception as e:
+            raise Exception(f"Failed to send test email to {test_email}: {e}")
+
+    sent = []
+    failed = []
+
+    # 2. Send to all emails from CSV after test success
+    for row in reader:
+        email = row.get("email") or row.get("Email")
+        if not email:
+            failed.append({"error": "Missing email", "row": row})
+            continue
+
+        try:
+            msg = EmailMessage()
+            msg["From"] = from_email
+            msg["To"] = email
+            msg["Subject"] = subject
+            msg.set_content(body)
+
+            await aiosmtplib.send(
+                msg,
+                hostname=smtp_host,
+                port=smtp_port,
+                start_tls=True,
+                username=smtp_user,
+                password=smtp_pass,
+            )
+            sent.append(email)
+        except Exception as e:
+            failed.append({"email": email, "error": str(e)})
+
+    return sent, failed
