@@ -10,6 +10,10 @@ from certificateservice.repo.user_repo import UserRepo
 from certificateservice.service import user_service
 from certificateservice.utils import loggerutil
 from certificateservice.domain.user_req_res import CreateUserRequest
+from fastapi import Body
+import os
+import traceback
+from uuid import uuid4
 
 
 router = APIRouter(
@@ -39,16 +43,32 @@ def signup_user(req: CreateUserRequest):
         return User(error=True, msg=str(e), code=ErrorCode.BAD_REQUEST)
     except Exception as e:
         logger.exception(e)
+        print("ERROR:", e)
+        traceback.print_exc()
         return User(error=True, msg=str(e), code=ErrorCode.INTERNAL_ERROR)
     
 
 
 @router.get("/{user_id}", response_model=User)
 async def get_user(user_id: str, db: AsyncSession = Depends(get_db)):
-   
-    user = await db.get(UserRecord, user_id)
-    
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return user
+    try:
+        user = await db.get(UserRecord, user_id)
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
+    except Exception as e:
+        print("ERROR:", e)
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/{user_id}")
+def delete_user(user_id: str):
+    try:
+        user_service.delete_user(user_id)
+        return {"message": "User deleted successfully"}
+    except Exception as e:
+        logger.error(e)
+        print("ERROR:", e)
+        traceback.print_exc()
+        raise HTTPException(status_code=404, detail=str(e))
+

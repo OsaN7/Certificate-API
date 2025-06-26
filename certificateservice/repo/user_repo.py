@@ -29,6 +29,15 @@ class UserRepo(Repo):
         with self.db.get_session() as session:
             return session.query(UserRecord).filter(UserRecord.email == email).first()
 
+    def delete_user(self, user_id: str) -> bool:
+        with self.db.get_session() as sess:
+            user = sess.query(UserRecord).filter(UserRecord.user_id == user_id).first()
+            if user:
+                sess.delete(user)
+                sess.commit()
+                return True
+            return False
+
 
 
 

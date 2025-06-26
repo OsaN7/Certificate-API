@@ -9,6 +9,9 @@ from certificateservice.utils.singleton import Singleton
 from certificateservice.model.user_record import UserRecord
 from certificateservice.model.course_record import TemplateRecord
 from certificateservice.model.base import Base
+from certificateservice.model.certificate_process_record import CertificateProcessRecord
+from certificateservice.model.process_template_record import ProcessTemplateRecord
+from certificateservice.model.process_data_record import ProcessDataRecord
 
 from typing import Generator
 
@@ -149,6 +152,8 @@ def get_db() -> Generator:
         yield db
     finally:
         db.close()
+
+
 
 # Ensure tables are created at startup
 try:

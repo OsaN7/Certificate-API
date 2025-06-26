@@ -35,7 +35,11 @@ class Placeholder(BaseModel):
 class CertificateConfig(BaseModel):
     template: Optional[str] = None
     placeholders: List[Placeholder] = []
-    output_dir: str = 'certificates'
+    output_dir: str = 'certificates'    
+
+
+
+    
     output_file_prefix: Optional[str] = None
     unique_attribute: Optional[str] = None
 

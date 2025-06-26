@@ -19,3 +19,9 @@ class UserService:
         if not user:
             raise InvalidError("User not found.")
         return user
+
+    def delete_user(self, user_id: str):
+        success = self.user_repo.delete_user(user_id)
+        if not success:
+            raise InvalidError("User not found.")
+        return success
