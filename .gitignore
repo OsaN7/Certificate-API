@@ -6,3 +6,5 @@ Certificates
 *__pycache__
 data
 *.log
+.env
+

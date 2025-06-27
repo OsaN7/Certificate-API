@@ -3,8 +3,6 @@ import logging
 import logging.config
 import os
 
-from certificateservice.utils.exception import InvalidError
-
 
 class TreeLogger:
     _logger = None
@@ -30,8 +28,7 @@ class TreeLogger:
                     filename = args.logging
 
             if not os.path.exists(filename):
-                raise InvalidError(f"Logging config file not found at: {filename}")
-                
+                raise FileNotFoundError(f"Logging config file not found at: {filename}")
 
             logging.config.fileConfig(fname=filename)
             TreeLogger._initialized = True
@@ -77,3 +74,6 @@ def get_logger(name="root"):
     :return: Logger instance.
     """
     return TreeLogger(name=name)
+
+# logging.getLogger('pyngrok.process').setLevel(logging.ERROR)
+# logging.getLogger('pyngrok.ngrok').setLevel(logging.ERROR)

@@ -1,14 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Body, Query, UploadFile, File
+import json
+import os
+import traceback
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException, Body, Query
 from sqlalchemy.orm import Session
 
-import os
-import uuid
-import json
-import traceback
-import shutil
 from certificateservice.repo.course_repo import CertificateProcessRepo
-from certificateservice.repo.datasource import get_db
-
 
 router = APIRouter(prefix="/certificates")
 
@@ -17,10 +15,9 @@ router = APIRouter(prefix="/certificates")
 
 @router.post("/process", tags=["Add Certificate Process"], summary="Add Certificate Process")
 def add_certificate_process(
-    name: str = Body(..., description="Certificate process name"),
-    date: str = Body(..., description="Date of the process (YYYY-MM-DD)"),
-    user_id: str = Body(..., description="User ID"),
-    db: Session = Depends(get_db)
+        name: str = Body(..., description="Certificate process name"),
+        date: str = Body(..., description="Date of the process (YYYY-MM-DD)"),
+        user_id: str = Body(..., description="User ID"),
 ):
     """Add a new certificate process."""
     try:
@@ -53,8 +50,10 @@ def add_certificate_process(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/processes", tags=["Add Certificate Process"], summary="List Certificate Processes")
-def list_certificate_processes(user_id: str = Query(..., description="User ID to list certificate processes for"), db: Session = Depends(get_db)):
+def list_certificate_processes(user_id: str = Query(..., description="User ID to list certificate processes for"),
+                               db: Session = Depends(get_db)):
     """List all certificate processes for a user."""
     try:
         repo = CertificateProcessRepo(db)
@@ -72,5 +71,3 @@ def list_certificate_processes(user_id: str = Query(..., description="User ID to
         print("ERROR:", e)
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
-

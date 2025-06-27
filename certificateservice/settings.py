@@ -11,6 +11,7 @@ load_dotenv()
 
 
 class Settings:
+    API_PORT = int(os.getenv("API_PORT", 8000))
     OUTPUT_BASE_DIR = "data/certificates"
 
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -21,13 +22,5 @@ class Settings:
     SENDER_PASSWORD: str = os.getenv("SENDER_PASSWORD", None)
     RECIPIENT_EMAILS: str = os.getenv("RECIPIENT_EMAILS", None)
     ENABLE_EMAIL_SERVICE: bool = os.getenv("ENABLE_EMAIL_SERVICE", "False").lower() == "true"
-    
-    # Use DATABASE_URL from environment (.env)
-    DATABASE_URL = os.getenv("DATABASE_URL")
-    DATABASE_URL="postgresql://postgres:osan@localhost:5432/certificate"
 
-    
-    
-
-
- 
+    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:osan@localhost:5432/certificate")

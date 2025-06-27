@@ -1,15 +1,15 @@
-from sqlalchemy.orm import Session
 from typing import Optional
+
+from certificateservice.domain.user import User
 from certificateservice.model.user_record import UserRecord
 from certificateservice.repo.datasource import DataSource, Repo
 
 
 class UserRepo(Repo):
-    def __init__(self, db:DataSource):
+    def __init__(self, db: DataSource):
         super().__init__(db)
-    
-    
-    def get_user_by_id(self,  user_id: str) -> Optional[UserRecord]:
+
+    def get_user_by_id(self, user_id: str) -> Optional[UserRecord]:
         with self.db.get_session() as sess:
             return sess.query(UserRecord).filter(UserRecord.user_id == user_id).first()
 
@@ -17,9 +17,9 @@ class UserRepo(Repo):
         with self.db.get_session() as sess:
             return sess.query(UserRecord).all()
 
-    def create_user(self, user: dict, password: str) -> UserRecord:
+    def create_user(self, user: User, password: str) -> UserRecord:
         with self.db.get_session() as sess:
-            user_record = UserRecord(**user, password=password)
+            user_record = UserRecord(**user.model_dump(), password=password)
             sess.add(user_record)
             sess.commit()
             sess.refresh(user_record)
@@ -37,7 +37,3 @@ class UserRepo(Repo):
                 sess.commit()
                 return True
             return False
-
-
-
-

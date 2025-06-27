@@ -1,29 +1,23 @@
-from sqlalchemy.orm import Session
 from certificateservice.model.certificate_process_record import CertificateProcessRecord
-from certificateservice.repo.datasource import Repo
-from certificateservice.model.process_template_record import ProcessTemplateRecord
-from certificateservice.model.process_data_record import ProcessDataRecord
-
-# from certificateservice.model.course_record import TemplateRecord
+from certificateservice.repo.datasource import Repo, DataSource
 
 
 class CertificateProcessRepo(Repo):
-    def __init__(self, db: Session):
+    def __init__(self, db: DataSource):
         super().__init__(db)
 
     def create_process(self, process_data: dict) -> CertificateProcessRecord:
         process = CertificateProcessRecord(**process_data)
-        self.db.add(process)
-        self.db.commit()
-        self.db.refresh(process)
+        with self.db.get_session() as session:
+            session.add(process)
+            session.commit()
+            session.refresh(process)
+
         return process
 
     def get_processes_by_user(self, user_id: str) -> list[CertificateProcessRecord]:
-        return self.db.query(CertificateProcessRecord).filter(CertificateProcessRecord.user_id == user_id).all()
-
-
-
-
+        with self.db.get_session() as session:
+            return session.query(CertificateProcessRecord).filter(CertificateProcessRecord.user_id == user_id).all()
 
 # class TemplateRepo(Repo):
 #     def __init__(self, db: DataSource):

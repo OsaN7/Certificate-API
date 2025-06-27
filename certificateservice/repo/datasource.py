@@ -1,19 +1,14 @@
+import os
+
 from sqlalchemy import create_engine, text
 from sqlalchemy import inspect
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, Session
-import os
-from certificateservice.app.settings import Settings
+
+from certificateservice.model.base import Base
+from certificateservice.settings import Settings
 from certificateservice.utils import loggerutil
 from certificateservice.utils.singleton import Singleton
-from certificateservice.model.user_record import UserRecord
-from certificateservice.model.course_record import TemplateRecord
-from certificateservice.model.base import Base
-from certificateservice.model.certificate_process_record import CertificateProcessRecord
-from certificateservice.model.process_template_record import ProcessTemplateRecord
-from certificateservice.model.process_data_record import ProcessDataRecord
-
-from typing import Generator
 
 logger = loggerutil.get_logger(__name__)
 
@@ -145,14 +140,6 @@ class Repo:
     def __init__(self, db: DataSource):
         self.db = db
         self.logger = loggerutil.get_logger(self.__class__.__name__)
-
-def get_db() -> Generator:
-    db = DataSource().get_session()
-    try:
-        yield db
-    finally:
-        db.close()
-
 
 
 # Ensure tables are created at startup
