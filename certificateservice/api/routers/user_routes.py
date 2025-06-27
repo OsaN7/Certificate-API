@@ -22,7 +22,7 @@ logger = loggerutil.get_logger(__name__)
 def signup_user(req: CreateUserRequest):
     try:
         user_record = user_service.create_user(req)
-        return CreateUserRequest(
+        return CreateUserResponse(
             user=User(
                 user_id=user_record.user_id,
                 full_name=user_record.full_name,
