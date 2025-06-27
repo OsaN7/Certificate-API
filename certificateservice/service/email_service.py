@@ -12,6 +12,7 @@ from email.mime.text import MIMEText
 
 import markdown
 
+from certificateservice.domain.email import EmailDetail
 from certificateservice.settings import Settings
 from certificateservice.utils import loggerutil
 
@@ -108,3 +109,29 @@ class EmailService:
 
         self.server.send_message(msg)
         self.logger.debug(f"Email sent to {recipients}")
+
+    def send_email(self, email: EmailDetail) -> bool:
+        try:
+            return self.send(
+                recipient_emails=email.recipient_email,
+                subject=email.subject,
+                message=email.message,
+                attachments=email.attachments,
+                message_type=email.message_type
+            )
+        except Exception as e:
+            self.logger.exception(f"Failed to send email: {e}")
+            return False
+
+    def send_in_batch(self, emails: list[tuple[int, EmailDetail]]) -> list[tuple[int, bool]]:
+        results: list[tuple[int, bool]] = []
+        try:
+            for index, email in emails:
+                status = self.send_email(email=email)
+                results.append((index, status))
+                msg = "Sent" if status else "Failed"
+                print(f"Email:[{msg}]-{index}-{email.recipient_email}, subject: {email.subject}")
+            return results
+        except Exception as e:
+            self.logger.exception(f"Failed to send batch emails: {e}")
+            return results
