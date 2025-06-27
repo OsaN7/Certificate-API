@@ -7,14 +7,14 @@ from certificateservice.domain.user import User
 from certificateservice.domain.user_req_res import CreateUserRequest, CreateUserResponse
 from certificateservice.repo.datasource import DataSource
 from certificateservice.repo.user_repo import UserRepo
-from certificateservice.service import user_service
+from certificateservice.service.user_service import UserService
 from certificateservice.utils import loggerutil
 
 router = APIRouter(prefix="/users", tags=["User Management"])
 
 db = DataSource()
 user_repo = UserRepo(db=db)
-user_service = user_service.UserService(user_repo=user_repo)
+user_service = UserService(user_repo=user_repo)
 logger = loggerutil.get_logger(__name__)
 
 
