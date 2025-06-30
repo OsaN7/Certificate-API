@@ -12,6 +12,7 @@ from email.mime.text import MIMEText
 
 import markdown
 
+from certificateservice.domain.email import EmailDetail
 from certificateservice.settings import Settings
 from certificateservice.utils import loggerutil
 
@@ -111,36 +112,28 @@ class EmailService:
         self.server.send_message(msg)
         self.logger.debug(f"Email sent to {recipients}")
 
-def _get_email_from_row(row):
-    # Try common keys for email
-    for key in ["email", "Email", "e-mail", "E-mail"]:
-        if key in row:
-            return row[key]
-    return None
-
-async def send_email_to_list(reader, subject, body, test_email=None):
-    email_service = EmailService()
-    sent = []
-    failed = []
-
-    # If test_email is provided, only send to that address
-    if test_email:
+    def send_email(self, email: EmailDetail) -> bool:
         try:
-            email_service.send(test_email, subject, body, message_type="plain")
-            sent.append(test_email)
-        except Exception:
-            failed.append(test_email)
-        return sent, failed
+            return self.send(
+                recipient_emails=email.recipient_email,
+                subject=email.subject,
+                message=email.message,
+                attachments=email.attachments,
+                message_type=email.message_type
+            )
+        except Exception as e:
+            self.logger.exception(f"Failed to send email: {e}")
+            return False
 
-    # Otherwise, send to all emails in the reader
-    for row in reader:
-        email = _get_email_from_row(row)
-        if not email:
-            continue
+    def send_in_batch(self, emails: list[tuple[int, EmailDetail]]) -> list[tuple[int, bool]]:
+        results: list[tuple[int, bool]] = []
         try:
-            email_service.send(email, subject, body, message_type="plain")
-            sent.append(email)
-            await asyncio.sleep(0.1)  # Avoid SMTP rate limits
-        except Exception:
-            failed.append(email)
-    return sent, failed
+            for index, email in emails:
+                status = self.send_email(email=email)
+                results.append((index, status))
+                msg = "Sent" if status else "Failed"
+                print(f"Email:[{msg}]-{index}-{email.recipient_email}, subject: {email.subject}")
+            return results
+        except Exception as e:
+            self.logger.exception(f"Failed to send batch emails: {e}")
+            return results
