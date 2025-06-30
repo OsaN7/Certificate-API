@@ -3,9 +3,9 @@ from sqlalchemy.dialects.postgresql import JSON
 from certificateservice.model.base import Base
 
 class TemplateRecord(Base):
-    __tablename__ = "template"
+    __tablename__ = "certificate"
 
-    template_id = Column(String, primary_key=True, index=True)
+    certificate_id = Column(String, primary_key=True, index=True)
     user_id = Column(String, primary_key=True, index=True)
     title = Column(String, nullable=False)
     placeholders = Column(JSON, nullable=False, default=list)

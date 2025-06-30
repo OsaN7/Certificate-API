@@ -1,3 +1,3 @@
-from certificateservice.domain.certificate import CertificateRecordSchema  
+from certificateservice.domain.certificate import CertificateProcessSchema  
 from .common import BaseResponse
-__all__ = ["CertificateRecordSchema", "BaseResponse"]
+__all__ = ["CertificateProcessSchema", "BaseResponse"]

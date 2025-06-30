@@ -1,15 +1,16 @@
-import json
-import os
 import traceback
-import uuid
-
 from fastapi import APIRouter, Depends, HTTPException, Body, Query
-from sqlalchemy.orm import Session
-
-from certificateservice.repo.course_repo import CertificateProcessRepo
+from certificateservice.repo.certificate_repo import CertificateProcessRepo
+from certificateservice.repo.datasource import DataSource, get_db
+from certificateservice.service.certificate_service import CertificateService
+from certificateservice.utils import loggerutil
 
 router = APIRouter(prefix="/certificates")
 
+db = DataSource()
+repo = CertificateProcessRepo(db=db)
+certificate_service = CertificateService(repo=repo)
+logger = loggerutil.get_logger(__name__)
 
 # --- Certificate Process Management ---
 
@@ -21,53 +22,21 @@ def add_certificate_process(
 ):
     """Add a new certificate process."""
     try:
-        process_id = str(uuid.uuid4())
-        base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data')
-        process_dir = os.path.join(base_dir, user_id, process_id)
-        os.makedirs(process_dir, exist_ok=True)
-        metadata = {
-            "name": name,
-            "date": date,
-            "user_id": user_id,
-            "process_id": process_id
-        }
-        with open(os.path.join(process_dir, "metadata.json"), "w") as f:
-            json.dump(metadata, f)
-        repo = CertificateProcessRepo(db)
-        repo.create_process({
-            "process_id": process_id,
-            "name": name,
-            "date": date,
-            "user_id": user_id
-        })
-        return {
-            "message": "Certificate process created",
-            "directory": os.path.relpath(process_dir, base_dir),
-            "process_id": process_id
-        }
+        return certificate_service.add_certificate_process(name, date, user_id)
     except Exception as e:
+        logger.error(e)
         print("ERROR:", e)
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/processes", tags=["Add Certificate Process"], summary="List Certificate Processes")
-def list_certificate_processes(user_id: str = Query(..., description="User ID to list certificate processes for"),
-                               db: Session = Depends(get_db)):
+def list_certificate_processes(user_id: str = Query(..., description="User ID to list certificate processes for")):
     """List all certificate processes for a user."""
     try:
-        repo = CertificateProcessRepo(db)
-        processes = repo.get_processes_by_user(user_id)
-        return [
-            {
-                "process_id": p.process_id,
-                "name": p.name,
-                "date": p.date,
-                "user_id": p.user_id,
-                "created_at": p.created_at
-            } for p in processes
-        ]
+        return certificate_service.list_certificate_processes(user_id)
     except Exception as e:
+        logger.error(e)
         print("ERROR:", e)
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,4 +1,5 @@
 import os
+from typing import Generator
 
 from sqlalchemy import create_engine, text
 from sqlalchemy import inspect
@@ -9,6 +10,7 @@ from certificateservice.model.base import Base
 from certificateservice.settings import Settings
 from certificateservice.utils import loggerutil
 from certificateservice.utils.singleton import Singleton
+
 
 logger = loggerutil.get_logger(__name__)
 
@@ -140,6 +142,14 @@ class Repo:
     def __init__(self, db: DataSource):
         self.db = db
         self.logger = loggerutil.get_logger(self.__class__.__name__)
+
+
+def get_db():
+    db = DataSource().get_session()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 # Ensure tables are created at startup

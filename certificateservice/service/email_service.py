@@ -15,6 +15,8 @@ import markdown
 from certificateservice.settings import Settings
 from certificateservice.utils import loggerutil
 
+import asyncio
+
 
 class EmailService:
     def __init__(self, smtp_server: str = None, smtp_port: int = 0, sender_email: str = None,
@@ -108,3 +110,37 @@ class EmailService:
 
         self.server.send_message(msg)
         self.logger.debug(f"Email sent to {recipients}")
+
+def _get_email_from_row(row):
+    # Try common keys for email
+    for key in ["email", "Email", "e-mail", "E-mail"]:
+        if key in row:
+            return row[key]
+    return None
+
+async def send_email_to_list(reader, subject, body, test_email=None):
+    email_service = EmailService()
+    sent = []
+    failed = []
+
+    # If test_email is provided, only send to that address
+    if test_email:
+        try:
+            email_service.send(test_email, subject, body, message_type="plain")
+            sent.append(test_email)
+        except Exception:
+            failed.append(test_email)
+        return sent, failed
+
+    # Otherwise, send to all emails in the reader
+    for row in reader:
+        email = _get_email_from_row(row)
+        if not email:
+            continue
+        try:
+            email_service.send(email, subject, body, message_type="plain")
+            sent.append(email)
+            await asyncio.sleep(0.1)  # Avoid SMTP rate limits
+        except Exception:
+            failed.append(email)
+    return sent, failed

@@ -23,4 +23,4 @@ class Settings:
     RECIPIENT_EMAILS: str = os.getenv("RECIPIENT_EMAILS", None)
     ENABLE_EMAIL_SERVICE: bool = os.getenv("ENABLE_EMAIL_SERVICE", "False").lower() == "true"
 
-    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:osan@localhost:5432/certificate")
+    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:osan@localhost:5432/certificate").strip()
