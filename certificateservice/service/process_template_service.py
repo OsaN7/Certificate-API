@@ -1,14 +1,16 @@
 import os
-import uuid
 import shutil
+import uuid
+
 from fastapi.responses import StreamingResponse
-from certificateservice.repo.process_template_repo import ProcessTemplateRepo
+
 from certificateservice.model.process_template_record import ProcessTemplateRecord
+from certificateservice.repo.process_template_repo import ProcessTemplateRepo
+
 
 class ProcessTemplateService:
-    def __init__(self, repo: ProcessTemplateRepo, db):
+    def __init__(self, repo: ProcessTemplateRepo):
         self.repo = repo
-        self.db = db
 
     def add_process_template(self, name, user_id, process_id, template_file):
         if not process_id:
@@ -73,4 +75,4 @@ class ProcessTemplateService:
 
     def test_template_url(self, template_id):
         url = f"/certificates/process/template/download?template_id={template_id}"
-        return {"url": url} 
+        return {"url": url}

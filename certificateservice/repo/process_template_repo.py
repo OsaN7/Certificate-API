@@ -4,6 +4,7 @@ from certificateservice.domain.process_template_schema import ProcessTemplateSch
 from certificateservice.model.process_template_record import ProcessTemplateRecord
 from certificateservice.repo.datasource import Repo, DataSource
 
+
 class ProcessTemplateRepo(Repo):
     def __init__(self, db: DataSource):
         super().__init__(db)
@@ -23,9 +24,10 @@ class ProcessTemplateRepo(Repo):
                 return record
         else:
             record = ProcessTemplateRecord(**data)
-            self.db.add(record)
-            self.db.commit()
-            self.db.refresh(record)
+            with self.db.get_session() as sess:
+                sess.add(record)
+                sess.commit()
+                sess.refresh(record)
             return record
 
     def get_templates_by_process(self, user_id: str, process_id: str) -> List[ProcessTemplateRecord]:
@@ -44,21 +46,24 @@ class ProcessTemplateRepo(Repo):
     def get_template_by_id(self, template_id: str) -> Optional[ProcessTemplateRecord]:
         if hasattr(self.db, "get_session"):
             with self.db.get_session() as sess:
-                return sess.query(ProcessTemplateRecord).filter(ProcessTemplateRecord.template_id == template_id).first()
+                return sess.query(ProcessTemplateRecord).filter(
+                    ProcessTemplateRecord.template_id == template_id).first()
         else:
             return self.db.query(ProcessTemplateRecord).filter(ProcessTemplateRecord.template_id == template_id).first()
 
     def delete_template(self, template_id: str) -> bool:
         if hasattr(self.db, "get_session"):
             with self.db.get_session() as sess:
-                record = sess.query(ProcessTemplateRecord).filter(ProcessTemplateRecord.template_id == template_id).first()
+                record = sess.query(ProcessTemplateRecord).filter(
+                    ProcessTemplateRecord.template_id == template_id).first()
                 if record:
                     sess.delete(record)
                     sess.commit()
                     return True
                 return False
         else:
-            record = self.db.query(ProcessTemplateRecord).filter(ProcessTemplateRecord.template_id == template_id).first()
+            record = self.db.query(ProcessTemplateRecord).filter(
+                ProcessTemplateRecord.template_id == template_id).first()
             if record:
                 self.db.delete(record)
                 self.db.commit()

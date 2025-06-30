@@ -1,17 +1,11 @@
 import traceback
+
 from fastapi import APIRouter, Depends, HTTPException, Body, Query, UploadFile, File
 from sqlalchemy.orm import Session
-import os
-import uuid
-import shutil
-import io
-import csv
-from pydantic import BaseModel
+
 from certificateservice.domain.email import BulkEmailRequest
-from certificateservice.model.process_data_record import ProcessDataRecord
 from certificateservice.repo.datasource import DataSource, get_db
 from certificateservice.service.process_data_service import ProcessDataService
-from certificateservice.service.email_service import send_email_to_list
 from certificateservice.utils import loggerutil
 
 router = APIRouter(prefix="/certificates/process-data", tags=["Process Data Page"])
@@ -23,10 +17,10 @@ logger = loggerutil.get_logger(__name__)
 
 @router.post("/process/data", tags=["Process Data Page"], summary="Add Process Data")
 def add_process_data(
-    name: str = Body(..., description="Process data name"),
-    user_id: str = Body(..., description="User ID"),
-    process_id: str = Body(None, description="Process ID (optional, will be generated if not provided)"),
-    csv_file: UploadFile = File(..., description="CSV file")
+        name: str = Body(..., description="Process data name"),
+        user_id: str = Body(..., description="User ID"),
+        process_id: str = Body(None, description="Process ID (optional, will be generated if not provided)"),
+        csv_file: UploadFile = File(..., description="CSV file")
 ):
     try:
         return process_data_service.add_process_data(name, user_id, process_id, csv_file)

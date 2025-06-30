@@ -32,12 +32,12 @@ def signup_user(req: CreateUserRequest):
         )
     except ValueError as e:
         logger.error(e)
-        return CreateUserResponse(error=True, msg=str(e), code=ErrorCode.BAD_REQUEST)
+        return CreateUserResponse(error=True, msg=str(e), error_code=ErrorCode.BAD_REQUEST)
     except Exception as e:
         logger.exception(e)
         print("ERROR:", e)
         traceback.print_exc()
-        return CreateUserResponse(error=True, msg=str(e), code=ErrorCode.BAD_REQUEST)
+        return CreateUserResponse(error=True, msg=str(e), error_code=ErrorCode.BAD_REQUEST)
 
 
 @router.get("/{user_id}", response_model=User)

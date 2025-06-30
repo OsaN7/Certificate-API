@@ -1,10 +1,11 @@
-import os
-import uuid
-import shutil
-import io
 import csv
-from certificateservice.model.process_data_record import ProcessDataRecord
-from certificateservice.service.email_service import send_email_to_list
+import io
+import os
+import shutil
+import uuid
+
+from certificateservice.model.process_data_record import ProcessRecord
+
 
 class ProcessDataService:
     def __init__(self, db):
@@ -27,7 +28,7 @@ class ProcessDataService:
         with open(csv_path, "wb") as f:
             f.write(file_bytes)
 
-        process_data_record = ProcessDataRecord(
+        process_data_record = ProcessRecord(
             process_data_id=process_data_id,
             name=name,
             user_id=user_id,
@@ -61,7 +62,7 @@ class ProcessDataService:
         return urls
 
     def delete_process_data(self, process_data_id):
-        data = self.db.query(ProcessDataRecord).filter_by(process_data_id=process_data_id).first()
+        data = self.db.query(ProcessRecord).filter_by(process_data_id=process_data_id).first()
         if not data:
             raise ValueError("Data not found")
 
@@ -75,10 +76,9 @@ class ProcessDataService:
         return {"message": "Data deleted successfully", "data_id": process_data_id}
 
     async def send_emails_from_csv(self, data, db):
-        record = db.query(ProcessDataRecord).filter_by(process_data_id=data.process_data_id).first()
+        record = db.query(ProcessRecord).filter_by(process_data_id=data.process_data_id).first()
         if not record:
             raise ValueError("Process data not found")
-
 
         """If you want to use Binary data to save CSV_File"""
         # csv_bytes = record.csv_file
@@ -86,17 +86,16 @@ class ProcessDataService:
         #     raise ValueError("No CSV data found in record.")
         # csv_io = io.StringIO(csv_bytes.decode("utf-8"))
 
-
         if not record.file_path or not os.path.exists(record.file_path):
             raise ValueError("CSV file not found on disk.")
 
         with open(record.file_path, "r", encoding="utf-8") as f:
             csv_io = io.StringIO(f.read())
         reader = csv.DictReader(csv_io)
-        sent, failed = await send_email_to_list(reader, data.subject, data.body, data.test_email)
-        return {
-            "test_email_sent_to": data.test_email,
-            "emails_sent": sent,
-            "emails_failed": failed,
-            "total": len(sent) + len(failed)
-        } 
+        # sent, failed = await send_email_to_list(reader, data.subject, data.body, data.test_email)
+        # return {
+        #     "test_email_sent_to": data.test_email,
+        #     "emails_sent": sent,
+        #     "emails_failed": failed,
+        #     "total": len(sent) + len(failed)
+        # }

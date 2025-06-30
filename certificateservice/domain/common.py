@@ -41,7 +41,7 @@ class BaseRequest(BaseModel):
 
 class BaseResponse(BaseModel):
     error: bool = False
-    code: ErrorCode = ErrorCode.UNKNOWN
+    error_code: ErrorCode = ErrorCode.UNKNOWN
     msg: Optional[str] = None
 
 
