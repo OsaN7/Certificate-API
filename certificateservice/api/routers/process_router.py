@@ -23,8 +23,8 @@ logger = loggerutil.get_logger(__name__)
 
 # --- Certificate Process Management ---
 
-@router.post("/add", summary="Add Certificate Process")
-def add_certificate_process(req: AddProcessRequest = Body(...), response_model=AddProcessResponse):
+@router.post("/add", summary="Add Certificate Process", response_model=AddProcessResponse)
+def add_certificate_process(req: AddProcessRequest = Body(...)):
     try:
         return process_service.add_certificate_process(req)
     except Exception as e:
@@ -32,11 +32,11 @@ def add_certificate_process(req: AddProcessRequest = Body(...), response_model=A
         return AddProcessResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg=str(e))
 
 
-@router.get("/list", summary="List Certificate Processes")
-def list_certificate_processes(user_id: str, response_model=ListProcessesResponse):
+@router.get("/list", summary="List Certificate Processes", response_model=ListProcessesResponse)
+def list_certificate_processes(user_id: str):
     """List all certificate processes for a user."""
     try:
         return process_service.list_process(user_id)
     except Exception as e:
         logger.error(e)
-        return AddProcessResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg=str(e))
+        return ListProcessesResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg=str(e))

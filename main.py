@@ -1,14 +1,14 @@
 from fastapi import FastAPI
 
-from certificateservice.api.routers import certificate_routes, user_routes, template_routes, process_router
+from certificateservice.api.routers import process_data_routes, process_routes, user_routes, template_routes
 from certificateservice.settings import Settings
 
 app = FastAPI(title="Certificate Service API")
 
-app.include_router(certificate_routes)
+app.include_router(process_routes)
 app.include_router(user_routes)
 app.include_router(template_routes)
-app.include_router(process_router.router)
+app.include_router(process_data_routes)
 
 
 @app.get("/")

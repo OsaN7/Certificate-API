@@ -1,101 +1,135 @@
-import csv
-import io
 import os
 import shutil
 import uuid
+from typing import List
 
-from certificateservice.model.process_data_record import ProcessRecord
+from certificateservice.domain.common import ErrorCode
+from certificateservice.domain.process_data_reqres import (
+    AddProcessDataRequest,
+    AddProcessDataResponse,
+    ListProcessDataResponse,
+    DeleteProcessDataResponse,
+)
+from certificateservice.mapper.process_data_mapper import map_process_data_record_to_process_data
+from certificateservice.model.process_data_record import ProcessDataRecord
+from certificateservice.repo.process_data_repo import ProcessDataRepo
+from certificateservice.utils import loggerutil, strutil
+
+logger = loggerutil.get_logger(__name__)
 
 
 class ProcessDataService:
-    def __init__(self, db):
-        self.db = db
+    def __init__(self, process_data_repo: ProcessDataRepo):
+        self.process_data_repo = process_data_repo
+        self.base_data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data')
 
-    def add_process_data(self, name, user_id, process_id, csv_file):
-        if not process_id:
-            process_id = str(uuid.uuid4())
-        process_data_id = str(uuid.uuid4())
+    def add_process_data(self, req: AddProcessDataRequest) -> AddProcessDataResponse:
+        try:
+            if strutil.is_empty(req.name):
+                return AddProcessDataResponse(error=True, error_code=ErrorCode.INVALID_REQUEST, msg="Name cannot be empty")
+            if strutil.is_empty(req.user_id):
+                return AddProcessDataResponse(error=True, error_code=ErrorCode.INVALID_REQUEST, msg="User ID cannot be empty")
 
-        file_bytes = csv_file.file.read()
-        if not file_bytes:
-            raise ValueError("Uploaded CSV file is empty.")
+            process_id = req.process_id or str(uuid.uuid4())
+            process_data_id = str(uuid.uuid4())
 
-        base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data')
-        data_dir = os.path.join(base_dir, process_data_id)
-        os.makedirs(data_dir, exist_ok=True)
+            # Read CSV file content
+            file_bytes = req.csv_file.file.read()
+            if not file_bytes:
+                return AddProcessDataResponse(error=True, error_code=ErrorCode.INVALID_REQUEST, msg="Uploaded CSV file is empty.")
 
-        csv_path = os.path.join(data_dir, csv_file.filename)
-        with open(csv_path, "wb") as f:
-            f.write(file_bytes)
+            # Create directory for storing CSV file
+            data_dir = os.path.join(self.base_data_dir, process_data_id)
+            os.makedirs(data_dir, exist_ok=True)
 
-        process_data_record = ProcessRecord(
-            process_data_id=process_data_id,
-            name=name,
-            user_id=user_id,
-            process_id=process_id,
-            # csv_file=file_bytes
-            file_path=csv_path
+            csv_path = os.path.join(data_dir, req.csv_file.filename)
+            with open(csv_path, "wb") as f:
+                f.write(file_bytes)
 
-        )
-        self.db.add(process_data_record)
-        self.db.commit()
-        self.db.refresh(process_data_record)
+            record = ProcessDataRecord(
+                process_data_id=process_data_id,
+                name=req.name,
+                user_id=req.user_id,
+                process_id=process_id,
+                file_path=csv_path,
+            )
 
-        return {
-            "process_data_id": process_data_id,
-            "name": name,
-            "user_id": user_id,
-            "process_id": process_id,
-            "csv_file": csv_file.filename
-        }
+            saved_record = self.process_data_repo.create_process_data(record)
+            process_data = map_process_data_record_to_process_data(saved_record)
 
-    def list_process_data_urls(self, user_id):
-        base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data')
-        urls = []
-        for folder in os.listdir(base_dir):
-            folder_path = os.path.join(base_dir, folder)
-            if os.path.isdir(folder_path):
-                for file in os.listdir(folder_path):
-                    if file.lower().endswith('.csv'):
-                        url = f"/data/{folder}/{file}"
-                        urls.append({"process_data_id": folder, "csv_file": file, "url": url})
-        return urls
+            return AddProcessDataResponse(process_data=process_data)
 
-    def delete_process_data(self, process_data_id):
-        data = self.db.query(ProcessRecord).filter_by(process_data_id=process_data_id).first()
-        if not data:
-            raise ValueError("Data not found")
+        except Exception as e:
+            logger.error(f"Error adding process data: {e}")
+            return AddProcessDataResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg=str(e))
 
-        base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data')
-        data_dir = os.path.join(base_dir, process_data_id)
-        if os.path.isdir(data_dir):
-            shutil.rmtree(data_dir)
+    def list_process_data(self, user_id: str) -> ListProcessDataResponse:
+        try:
+            if strutil.is_empty(user_id):
+                return ListProcessDataResponse(error=True, error_code=ErrorCode.INVALID_REQUEST, msg="User ID cannot be empty")
 
-        self.db.delete(data)
-        self.db.commit()
-        return {"message": "Data deleted successfully", "data_id": process_data_id}
+            records: List[ProcessDataRecord] = self.process_data_repo.get_process_data_by_user(user_id)
+            if not records:
+                return ListProcessDataResponse(error=True, error_code=ErrorCode.NOT_FOUND, msg="No process data found for this user")
+
+            process_data_list = [map_process_data_record_to_process_data(rec) for rec in records]
+
+            return ListProcessDataResponse(process_data_list=process_data_list)
+
+        except Exception as e:
+            logger.error(f"Error listing process data: {e}")
+            return ListProcessDataResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg=str(e))
+
+    def delete_process_data(self, process_data_id: str) -> DeleteProcessDataResponse:
+        try:
+            record = self.process_data_repo.get_process_data_by_id(process_data_id)
+            if not record:
+                return DeleteProcessDataResponse(error=True, error_code=ErrorCode.NOT_FOUND, msg="Process data not found")
+
+            # Remove directory and files on disk
+            data_dir = os.path.join(self.base_data_dir, process_data_id)
+            if os.path.isdir(data_dir):
+                shutil.rmtree(data_dir)
+
+            deleted = self.process_data_repo.delete_process_data(process_data_id)
+            if deleted:
+                return DeleteProcessDataResponse(msg="Process data deleted successfully", process_data_id=process_data_id)
+            else:
+                return DeleteProcessDataResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg="Failed to delete process data")
+
+        except Exception as e:
+            logger.error(f"Error deleting process data: {e}")
+            return DeleteProcessDataResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg=str(e))
 
     async def send_emails_from_csv(self, data, db):
-        record = db.query(ProcessRecord).filter_by(process_data_id=data.process_data_id).first()
-        if not record:
-            raise ValueError("Process data not found")
+        try:
+            record = self.process_data_repo.get_process_data_by_id(data.process_data_id)
+            if not record:
+                raise ValueError("Process data not found")
 
-        """If you want to use Binary data to save CSV_File"""
-        # csv_bytes = record.csv_file
-        # if not csv_bytes:
-        #     raise ValueError("No CSV data found in record.")
-        # csv_io = io.StringIO(csv_bytes.decode("utf-8"))
+            if not record.file_path or not os.path.exists(record.file_path):
+                raise ValueError("CSV file not found on disk.")
 
-        if not record.file_path or not os.path.exists(record.file_path):
-            raise ValueError("CSV file not found on disk.")
+            import csv
+            import io
 
-        with open(record.file_path, "r", encoding="utf-8") as f:
-            csv_io = io.StringIO(f.read())
-        reader = csv.DictReader(csv_io)
-        # sent, failed = await send_email_to_list(reader, data.subject, data.body, data.test_email)
-        # return {
-        #     "test_email_sent_to": data.test_email,
-        #     "emails_sent": sent,
-        #     "emails_failed": failed,
-        #     "total": len(sent) + len(failed)
-        # }
+            with open(record.file_path, "r", encoding="utf-8") as f:
+                csv_io = io.StringIO(f.read())
+
+            reader = csv.DictReader(csv_io)
+
+            # Implement your email sending logic here (async)
+            # Example:
+            # sent, failed = await send_email_to_list(reader, data.subject, data.body, data.test_email)
+            # return {
+            #     "test_email_sent_to": data.test_email,
+            #     "emails_sent": sent,
+            #     "emails_failed": failed,
+            #     "total": len(sent) + len(failed)
+            # }
+
+            return {"message": "send_emails_from_csv method not yet implemented"}
+
+        except Exception as e:
+            logger.error(f"Error sending emails from CSV: {e}")
+            raise
