@@ -1,38 +1,34 @@
 from typing import Optional, List
+from sqlalchemy.orm import Session 
 from certificateservice.model.process_data_record import ProcessDataRecord
-from certificateservice.repo.datasource import Repo, DataSource
 
 
-class ProcessDataRepo(Repo):
-    def __init__(self, db: DataSource):
-        super().__init__(db)
+class ProcessDataRepo:
+    def __init__(self, db: Session):  
+        self.db = db
 
     def create_process_data(self, process_data: ProcessDataRecord) -> ProcessDataRecord:
-        with self.db.get_session() as sess:
-            sess.add(process_data)
-            sess.commit()
-            sess.refresh(process_data)
-            return process_data
+        self.db.add(process_data)
+        self.db.commit()
+        self.db.refresh(process_data)
+        return process_data
 
     def get_process_data_by_user(self, user_id: str) -> List[ProcessDataRecord]:
-        with self.db.get_session() as sess:
-            return sess.query(ProcessDataRecord).filter(
-                ProcessDataRecord.user_id == user_id
-            ).all()
+        return self.db.query(ProcessDataRecord).filter(
+            ProcessDataRecord.user_id == user_id
+        ).all()
 
     def get_process_data_by_id(self, process_data_id: str) -> Optional[ProcessDataRecord]:
-        with self.db.get_session() as sess:
-            return sess.query(ProcessDataRecord).filter(
-                ProcessDataRecord.process_data_id == process_data_id
-            ).first()
+        return self.db.query(ProcessDataRecord).filter(
+            ProcessDataRecord.process_data_id == process_data_id
+        ).first()
 
     def delete_process_data(self, process_data_id: str) -> bool:
-        with self.db.get_session() as sess:
-            record = sess.query(ProcessDataRecord).filter(
-                ProcessDataRecord.process_data_id == process_data_id
-            ).first()
-            if record:
-                sess.delete(record)
-                sess.commit()
-                return True
-            return False
+        record = self.db.query(ProcessDataRecord).filter(
+            ProcessDataRecord.process_data_id == process_data_id
+        ).first()
+        if record:
+            self.db.delete(record)
+            self.db.commit()
+            return True
+        return False

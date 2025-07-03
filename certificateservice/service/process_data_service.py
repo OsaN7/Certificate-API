@@ -3,6 +3,9 @@ import shutil
 import uuid
 from typing import List
 
+from typing import Optional
+from fastapi import UploadFile
+
 from certificateservice.domain.common import ErrorCode
 from certificateservice.domain.process_data_reqres import (
     AddProcessDataRequest,
@@ -23,33 +26,35 @@ class ProcessDataService:
         self.process_data_repo = process_data_repo
         self.base_data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data')
 
-    def add_process_data(self, req: AddProcessDataRequest) -> AddProcessDataResponse:
+
+    def add_process_data(self, name: str, user_id: str, process_id: Optional[str], csv_file: UploadFile) -> AddProcessDataResponse:
         try:
-            if strutil.is_empty(req.name):
+            if not name:
                 return AddProcessDataResponse(error=True, error_code=ErrorCode.INVALID_REQUEST, msg="Name cannot be empty")
-            if strutil.is_empty(req.user_id):
+            if not user_id:
                 return AddProcessDataResponse(error=True, error_code=ErrorCode.INVALID_REQUEST, msg="User ID cannot be empty")
 
-            process_id = req.process_id or str(uuid.uuid4())
+            process_id = process_id or str(uuid.uuid4())
             process_data_id = str(uuid.uuid4())
 
-            # Read CSV file content
-            file_bytes = req.csv_file.file.read()
+            # Read the uploaded CSV file
+            file_bytes = csv_file.file.read()
             if not file_bytes:
                 return AddProcessDataResponse(error=True, error_code=ErrorCode.INVALID_REQUEST, msg="Uploaded CSV file is empty.")
 
-            # Create directory for storing CSV file
+            # Create directory to store the file
             data_dir = os.path.join(self.base_data_dir, process_data_id)
             os.makedirs(data_dir, exist_ok=True)
 
-            csv_path = os.path.join(data_dir, req.csv_file.filename)
+            csv_path = os.path.join(data_dir, csv_file.filename)
             with open(csv_path, "wb") as f:
                 f.write(file_bytes)
 
+            # Save to DB
             record = ProcessDataRecord(
                 process_data_id=process_data_id,
-                name=req.name,
-                user_id=req.user_id,
+                name=name,
+                user_id=user_id,
                 process_id=process_id,
                 file_path=csv_path,
             )
@@ -62,6 +67,7 @@ class ProcessDataService:
         except Exception as e:
             logger.error(f"Error adding process data: {e}")
             return AddProcessDataResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg=str(e))
+
 
     def list_process_data(self, user_id: str) -> ListProcessDataResponse:
         try:

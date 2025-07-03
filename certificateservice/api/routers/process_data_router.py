@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from certificateservice.domain.email import BulkEmailRequest
 from certificateservice.repo.datasource import get_db
+from certificateservice.repo.process_data_repo import ProcessDataRepo
 from certificateservice.service.process_data_service import ProcessDataService
 from certificateservice.utils import loggerutil
 
@@ -22,7 +23,9 @@ def add_process_data(
     db: Session = Depends(get_db)
 ):
     try:
-        service = ProcessDataService(db)
+     
+        service = ProcessDataService(ProcessDataRepo(db))
+
         return service.add_process_data(name, user_id, process_id, csv_file)
     except Exception as e:
         logger.error(e)
@@ -36,7 +39,9 @@ def list_process_data_urls(
     db: Session = Depends(get_db)
 ):
     try:
-        service = ProcessDataService(db)
+        # service = ProcessDataService(db)
+        service = ProcessDataService(ProcessDataRepo(db))
+
         return service.list_process_data_urls(user_id)
     except Exception as e:
         logger.error(e)
@@ -50,7 +55,9 @@ def delete_process_data(
     db: Session = Depends(get_db)
 ):
     try:
-        service = ProcessDataService(db)
+        # service = ProcessDataService(db)
+        service = ProcessDataService(ProcessDataRepo(db))
+
         return service.delete_process_data(process_data_id)
     except Exception as e:
         logger.error(e)
@@ -64,7 +71,9 @@ async def send_emails_from_csv(
     db: Session = Depends(get_db)
 ):
     try:
-        service = ProcessDataService(db)
+        # service = ProcessDataService(db)
+        service = ProcessDataService(ProcessDataRepo(db))
+
         return await service.send_emails_from_csv(data, db)
     except Exception as e:
         logger.error(e)
