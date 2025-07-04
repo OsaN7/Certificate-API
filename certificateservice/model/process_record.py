@@ -9,5 +9,6 @@ class ProcessRecord(Base):
     process_id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
     user_id = Column(String, nullable=False, index=True)
+    date = Column(String, nullable=True)  # Store as 'YYYY-MM-DD' string
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

@@ -24,16 +24,43 @@ class ProcessTemplateService:
     def __init__(self, repo: ProcessTemplateRepo):
         self.repo = repo
 
-    def add_process_template(self, name: str, user_id: str, process_id: str, template_file) -> AddTemplateResponse:
+    def add_process_template(self, req: AddTemplateRequest) -> AddTemplateResponse:
         try:
-            if strutil.is_empty(name):
+            if strutil.is_empty(req.name):
                 return AddTemplateResponse(error=True, error_code=ErrorCode.INVALID_REQUEST, msg="Template name is required")
-            if strutil.is_empty(user_id):
+            if strutil.is_empty(req.user_id):
                 return AddTemplateResponse(error=True, error_code=ErrorCode.INVALID_REQUEST, msg="User ID is required")
 
-            if not process_id:
-                process_id = str(uuid.uuid4())
+            process_id = req.process_id or str(uuid.uuid4())
             template_id = str(uuid.uuid4())
+
+            record = ProcessTemplateRecord()
+            record.template_id = template_id
+            record.name = req.name
+            record.user_id = req.user_id
+            record.process_id = process_id
+            record.template_file = None  # No file saved yet
+
+            saved_record = self.repo.create_template(record)
+            if not saved_record:
+                return AddTemplateResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg="Failed to save template metadata")
+
+            template = map_template_record_to_template(saved_record)
+            # No file to encode yet
+            template.template_file = None
+            return AddTemplateResponse(template=template)
+
+        except Exception as e:
+            logger.error(f"Error adding process template metadata: {e}")
+            return AddTemplateResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg=str(e))
+
+
+    # Step 2: Upload file separately
+    def upload_process_template_file(self, template_id: str, template_file) -> AddTemplateResponse:
+        try:
+            template_record = self.repo.get_template_by_id(template_id)
+            if not template_record:
+                return AddTemplateResponse(error=True, error_code=ErrorCode.NOT_FOUND, msg="Template metadata not found")
 
             file_bytes = template_file.file.read()
 
@@ -45,25 +72,20 @@ class ProcessTemplateService:
             with open(pdf_path, "wb") as f:
                 f.write(file_bytes)
 
-            record = ProcessTemplateRecord()
-            record.template_id = template_id
-            record.name = name
-            record.user_id = user_id
-            record.process_id = process_id
-            record.template_file = file_bytes
+            # Update the existing record with the file bytes
+            template_record.template_file = file_bytes
 
-            saved_record = self.repo.create_template(record)
+            saved_record = self.repo.update_template(template_record)
             if not saved_record:
-                return AddTemplateResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg="Failed to save template")
+                return AddTemplateResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg="Failed to save template file")
 
-            # Convert bytes to base64 string for API response
             template = map_template_record_to_template(saved_record)
             if template.template_file is not None:
                 template.template_file = base64.b64encode(saved_record.template_file).decode('utf-8')
             return AddTemplateResponse(template=template)
 
         except Exception as e:
-            logger.error(f"Error adding process template: {e}")
+            logger.error(f"Error uploading process template file: {e}")
             return AddTemplateResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg=str(e))
 
     def list_process_templates(self, user_id: str, process_id: str) -> ListTemplateResponse:

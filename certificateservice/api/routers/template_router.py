@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Body, Query, UploadFile, File
+from fastapi import APIRouter, Body, UploadFile, File, Form
 from certificateservice.domain.common import ErrorCode
 from certificateservice.domain.process_template_reqres import (
+    AddTemplateRequest,
     AddTemplateResponse,
     ListTemplateResponse,
     DeleteTemplateResponse,
@@ -18,46 +19,29 @@ repo = ProcessTemplateRepo(db=db)
 service = ProcessTemplateService(repo=repo)
 
 
-@router.post("/add", summary="Add Process Template")
-def add_process_template(
-    name: str = Body(..., description="Template name"),
-    user_id: str = Body(..., description="User ID"),
-    process_id: str = Body(None, description="Optional process ID"),
-    template_file: UploadFile = File(..., description="PDF Template File"),
-) -> AddTemplateResponse:
+@router.post("/add", summary="Add Process Template", response_model=AddTemplateResponse)
+def add_process_template(req: AddTemplateRequest = Body(...)):
     try:
-        return service.add_process_template(name, user_id, process_id, template_file)
+        return service.add_process_template(req)
     except Exception as e:
         logger.error(e)
         return AddTemplateResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg=str(e))
 
-
-@router.get("/list", summary="List Process Templates")
-def list_process_templates(
-    user_id: str = Query(..., description="User ID"),
-    process_id: str = Query(..., description="Process ID"),
-) -> ListTemplateResponse:
+@router.get("/list", summary="List Process Templates", response_model=ListTemplateResponse)
+def list_process_templates(user_id: str = None, process_id: str = None):
     try:
-        return service.list_process_templates(user_id, process_id)
+        return service.list_process_templates(user_id=user_id, process_id=process_id)
     except Exception as e:
         logger.error(e)
         return ListTemplateResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg=str(e))
 
 
-@router.get("/download", summary="Download Process Template PDF")
-def download_process_template(template_id: str = Query(..., description="Template ID")):
-    try:
-        response = service.download_process_template(template_id)
-        if response is None:
-            return {"error": True, "error_code": ErrorCode.NOT_FOUND, "msg": "Template not found"}
-        return response
-    except Exception as e:
-        logger.error(e)
-        return {"error": True, "error_code": ErrorCode.INTERNAL_ERROR, "msg": str(e)}
-
-
-@router.delete("/delete", summary="Delete Process Template")
-def delete_process_template(template_id: str = Query(..., description="Template ID")) -> DeleteTemplateResponse:
+@router.delete("/delete", summary="Delete Process Template", response_model=DeleteTemplateResponse)
+def delete_process_template(template_id: str):
+    """
+    Delete a process template by template_id (passed as a query parameter).
+    Example: DELETE /certificates/process-template/delete?template_id=abc123
+    """
     try:
         result = service.delete_process_template(template_id)
         if result is None:
@@ -66,12 +50,3 @@ def delete_process_template(template_id: str = Query(..., description="Template 
     except Exception as e:
         logger.error(e)
         return DeleteTemplateResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg=str(e))
-
-
-@router.get("/test-url", summary="Test Template URL")
-def test_template_url(template_id: str = Query(..., description="Template ID")):
-    try:
-        return service.test_template_url(template_id)
-    except Exception as e:
-        logger.error(e)
-        return {"error": True, "error_code": ErrorCode.INTERNAL_ERROR, "msg": str(e)}

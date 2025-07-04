@@ -40,3 +40,17 @@ def list_certificate_processes(user_id: str):
     except Exception as e:
         logger.error(e)
         return ListProcessesResponse(error=True, error_code=ErrorCode.INTERNAL_ERROR, msg=str(e))
+
+
+@router.delete("/delete/", summary="Delete Certificate Process")
+def delete_certificate_process(process_id: str):
+    """Delete a certificate process for a user."""
+    try:
+        result = process_service.delete_process(process_id)
+        if result:
+            return {"success": True, "message": "Certificate process deleted successfully."}
+        else:
+            return {"success": False, "message": "No process found with the given ID."}
+    except Exception as e:
+        logger.error(e)
+        return {"success": False, "message": "Certificate process UNABLE to delete."}

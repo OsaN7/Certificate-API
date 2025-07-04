@@ -9,6 +9,24 @@ logger = loggerutil.get_logger(__name__)
 
 
 class ProcessService:
+    def delete_process(self, process_id: str):
+        """
+        Delete a certificate process by its ID.
+        Returns True if deleted, False if not found.
+        """
+        try:
+            if strutil.is_empty(process_id):
+                logger.error("Process ID cannot be empty")
+                return False
+
+            deleted = self.process_repo.delete_process(process_id)
+            if not deleted:
+                logger.error(f"No process found with ID: {process_id}")
+                return False
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting certificate process: {e}")
+            return False
 
     def __init__(self, process_repo: ProcessRepo):
         self.process_repo = process_repo
@@ -31,6 +49,7 @@ class ProcessService:
             process.process_id = uuidutil.generate_uuid()
             process.name = req.name
             process.user_id = req.user_id
+            process.date = req.date
 
             process = self.process_repo.create_process(process)
             if not process:

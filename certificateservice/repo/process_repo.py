@@ -6,6 +6,20 @@ from certificateservice.repo.datasource import Repo, DataSource
 
 
 class ProcessRepo(Repo):
+    def delete_processes_by_user(self, user_id: str) -> int:
+        """
+        Delete all processes for a given user_id.
+        Returns the number of deleted records.
+        """
+        with self.db.get_session() as sess:
+            records = sess.query(ProcessRecord).filter(ProcessRecord.user_id == user_id).all()
+            count = len(records)
+            for record in records:
+                sess.delete(record)
+            if count > 0:
+                sess.commit()
+            return count
+        
     def __init__(self, db: DataSource):
         super().__init__(db)
 

@@ -40,7 +40,7 @@ def signup_user(req: CreateUserRequest):
         return CreateUserResponse(error=True, msg=str(e), error_code=ErrorCode.BAD_REQUEST)
 
 
-@router.get("/{user_id}", response_model=User)
+@router.get("/user_id", response_model=User)
 async def get_user(user_id: str):
     try:
         user = user_service.get_user(user_id)
@@ -53,7 +53,7 @@ async def get_user(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{user_id}")
+@router.delete("/user_id", summary="Delete User")
 def delete_user(user_id: str):
     try:
         user_service.delete_user(user_id)
