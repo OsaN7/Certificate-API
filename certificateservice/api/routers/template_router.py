@@ -38,10 +38,6 @@ def list_process_templates(user_id: str = None, process_id: str = None):
 
 @router.delete("/delete", summary="Delete Process Template", response_model=DeleteTemplateResponse)
 def delete_process_template(template_id: str):
-    """
-    Delete a process template by template_id (passed as a query parameter).
-    Example: DELETE /certificates/process-template/delete?template_id=abc123
-    """
     try:
         result = service.delete_process_template(template_id)
         if result is None:
